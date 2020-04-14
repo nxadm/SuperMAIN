@@ -1,0 +1,25 @@
+{
+  "name": "SuperMAIN",
+  "description": "MAIN() with superpowers.",
+  "version": "0.1.0",
+  "perl": "6.c",
+  "authors": [
+    "Claudio Ramirez <pub.claudio@gmail.com>"
+  ],
+  "auth": "github:nxadm",
+  "depends": [],
+  "build-depends": [],
+  "test-depends": [],
+  "provides": {
+    "SuperMAIN": "lib/SuperMAIN.rakumod"
+  },
+  "resources": [],
+  "license": "Artistic License 2.0",
+  "tags": [
+    "Vortex",
+    "Total",
+    "Perspective"
+  ],
+  "api": "1",
+  "source-url": "git://github.com/nxadm/SuperMAIN.git"
+}

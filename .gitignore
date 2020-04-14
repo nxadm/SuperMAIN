@@ -1,0 +1,8 @@
+# precompiled files
+.precomp
+lib/.precomp
+
+
+.idea/
+SuperMAIN.iml
+projectFilesBackup*/

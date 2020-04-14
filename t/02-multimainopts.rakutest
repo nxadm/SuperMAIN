@@ -1,0 +1,47 @@
+use Test;
+use lib 'lib';
+
+#plan 4;
+
+my $proc = run 't/supermain-multi.raku', :out, :err;
+isnt $proc.exitcode, 0, "no args (exitcode)";
+my $errOutput = $proc.err.slurp: :close;
+like $errOutput.chomp, /^^Usage\:/, "no args (output)";
+
+$proc = run 't/supermain-multi.raku', 'pos1', 'pos2',
+        '--named1=named1', '--named2=named2', '--named3=named3', :out, :err;
+is $proc.exitcode, 0, "named-anywhere";
+
+$proc = run 't/supermain-multi.raku', 'pos1', 'pos2',
+        '-named1=named1', '--named2=named2', '--named3=named3', :out, :err;
+is $proc.exitcode, 0, "named-anywhere, single '-'";
+
+$proc = run 't/supermain-multi.raku', 'pos1', 'pos2',
+        '--named1', 'named1', '--named2', 'named2', '--named3', 'named3',
+        :out, :err;
+is $proc.exitcode, 0, "space separated named param";
+my $output = $proc.out.slurp: :close;
+like $output.chomp, / << NAMED1\: \s+ named1 >>/, "check value";
+like $output.chomp, / << NAMED2\: \s+ named2 >>/, "check value";
+like $output.chomp, / << NAMED3\: \s+ named3 >>/, "check value";
+
+
+$proc = run 't/supermain-multi.raku', 'pos1', 'pos2',
+        '--named1', 'named1', '--named2', 'named2', '-o', 'other', :out, :err;
+is $proc.exitcode, 0, "autoalias shortest";
+$output = $proc.out.slurp: :close;
+like $output.chomp, / << NAMED1\: \s+ named1 >>/, "check value";
+like $output.chomp, / << NAMED2\: \s+ named2 >>/, "check value";
+like $output.chomp, / << OTHER\: \s+ other >>/, "check value";
+
+$proc = run 't/supermain-multi.raku', 'pos1', 'pos2',
+        '--named1', 'named1', '--named2', 'named2', '-oth', 'other', '-ott', 'otter',
+        :out, :err;
+is $proc.exitcode, 0, "autoalias multi match";
+$output = $proc.out.slurp: :close;
+like $output.chomp, / << NAMED1\: \s+ named1 >>/, "check value";
+like $output.chomp, / << NAMED2\: \s+ named2 >>/, "check value";
+like $output.chomp, / << OTHER\: \s+ other >>/, "check value";
+like $output.chomp, / << OTTER\: \s+ otter >>/, "check value";
+
+done-testing;

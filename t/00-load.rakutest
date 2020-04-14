@@ -1,0 +1,6 @@
+use Test;
+use lib 'lib';
+
+plan 1;
+
+use-ok 'SuperMAIN';
