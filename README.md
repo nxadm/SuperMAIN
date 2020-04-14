@@ -64,3 +64,11 @@ use SuperMAIN;
 # That's it: just use `sub MAIN` or `multi MAIN` as usual.
 ```
 
+## Installation
+
+Until the module is added to the ecosystem you can install it as follows:
+
+```
+$ git clone https://github.com/nxadm/SuperMAIN
+$ zef install SuperMAIN
+```
