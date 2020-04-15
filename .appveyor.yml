@@ -1,0 +1,27 @@
+environment:
+  rakudo_pkg_version: 2020.02.1-01
+
+os: Visual Studio 2017
+
+platform: x64
+
+install:
+  - '"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat"'
+  - appveyor-retry curl -sSL -o rakudo.zip https://rakudo.org/dl/rakudo/rakudo-moar-%rakudo_pkg_version%-win-x86_64.zip
+  - 7z x rakudo.zip
+  - del rakudo.zip
+  - move rakudo* c:\rakudo
+  - SET PATH=C:\rakudo\bin;C:\rakudo\share\perl6\site\bin;%PATH%
+  - cd \
+  - appveyor-retry git clone https://github.com/ugexe/zef.git
+  - cd zef
+  - raku -I. bin/zef install .
+  - cd %APPVEYOR_BUILD_FOLDER%
+  - zef install --deps-only .
+
+build: off
+
+test_script:
+  - zef install .
+
+shallow_clone: true

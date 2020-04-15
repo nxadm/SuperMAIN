@@ -1,7 +1,7 @@
 {
   "name": "SuperMAIN",
   "description": "MAIN() with superpowers.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "perl": "6.c",
   "authors": [
     "Claudio Ramirez <pub.claudio@gmail.com>"

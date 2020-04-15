@@ -1,7 +1,10 @@
 use Test;
 use lib 'lib';
 
-#plan 4;
+# Skip test on Windows for now
+if $*DISTRO.is-win {
+    done-testing;
+}
 
 my $proc = run 't/supermain.raku', :out, :err;
 isnt $proc.exitcode, 0, "no args (exitcode)";
