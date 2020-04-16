@@ -3,7 +3,9 @@ use lib 'lib';
 
 # Skip test on Windows for now
 if $*DISTRO.is-win {
+    note "Windows testing skipped for now";
     done-testing;
+    exit;
 }
 
 my $proc = run 't/supermain-multi.raku', :out, :err;
