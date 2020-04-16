@@ -68,9 +68,15 @@ use SuperMAIN;
 
 ## Installation
 
-Until the module is added to the ecosystem you can install it as follows:
+Through the ecosystem:
+```
+$ zef install SuperMAIN
+```
+
+Locally:
 
 ```
 $ git clone https://github.com/nxadm/SuperMAIN
-$ zef install SuperMAIN
+$ cd SuperMAIN
+$ zef install .
 ```
