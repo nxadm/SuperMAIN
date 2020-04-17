@@ -57,6 +57,7 @@ sub rewrite-separator(@args --> Array) {
                 @args-new.push: $a;
                 $prev = "";
             }
+            # TODO: fix Boolean here
             when $a.starts-with('-') {
                 # Parameter part of a "--param value" construction
                 $prev = $a;
