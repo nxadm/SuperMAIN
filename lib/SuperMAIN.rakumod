@@ -8,13 +8,18 @@ sub ARGS-TO-CAPTURE(&main, @args --> Capture) is export {
     # Early exit, passthrough function
     return &*ARGS-TO-CAPTURE(&main, @args) unless @args;
 
-    # Convert the args to what MAIN expects: allow spaced for named params
-    my @args-new = rewrite-separator(@args);
+    # %args-rewritten<args> rewrite @args allowing spaces for named params values
+    # %args-rewritten<maybe-boolean-idx> keeps the indices of parameters that
+    # may be boolean, and possibly incorrectly joined with a positional parameter
+    # as a value.
+    my %args-rewritten = rewrite-separator(@args);
 
     # When multi is used for MAINs, &main is a proto and to the matched MAIN.
     # We need to retrieve all the candidates to find the matching signature.
-    # The signature in order to avoid
-    @args-new = rewrite-with-autoalias(&main.candidates.map(*.signature).list, @args-new);
+    # Boolean parameters joined with a value are fixed here.
+    my @args-new = rewrite-with-autoalias(
+            &main.candidates.map(*.signature).list, %args-rewritten
+    );
 
     return &*ARGS-TO-CAPTURE(&main, @args-new);
 }
@@ -47,41 +52,57 @@ sub create-aliases(Signature $sig --> Hash) {
     return %aliases;
 }
 
-sub rewrite-separator(@args --> Array) {
-    my @args-new;
-    my $prev = "";
+sub rewrite-separator(@args --> Hash) {
+    my (%response, @args-new, @maybe-boolean-idx);
+    my $prev-arg = "";
+    my Bool $prev-named;
     for @args -> $a {
         given True {
+            # Passthrough --param=value named parameter
             when $a.starts-with('-') && $a.contains('=') {
-                # Passthrough --param=value named parameter
                 @args-new.push: $a;
-                $prev = "";
+                $prev-arg = "";
+                $prev-named = True;
             }
-            # TODO: fix Boolean here
+            # Named parameter with no value attached
             when $a.starts-with('-') {
                 # Parameter part of a "--param value" construction
-                $prev = $a;
+                $prev-arg = $a;
+                $prev-named = True;
             }
-            when $prev ne "" {
-                # Value part of a "--param value" construction
-                @args-new.push: "$prev=$a";
-                $prev = "";
+            # Value of named parameter of a positional in a confusing place
+            when $prev-arg ne "" {
+                if $prev-named {
+                    @maybe-boolean-idx.push: @args.new.elems;
+                    @args-new.push: "$prev-arg=$a";
+                }
+                $prev-arg = "";
+                $prev-named = False;
             }
+            # Passthrough positional parameters
             default {
-                # Passthrough leftover parameters
                 @args-new.push: $a;
-                $prev = "";
+                $prev-arg = "";
+                $prev-named = False;
             }
         }
     }
-    return @args-new
+
+    if @args-new.defined { %response<args> = @args-new; }
+
+    if @maybe-boolean-idx.defined {
+        %response<maybe-boolean-idx> = @maybe-boolean-idx;
+    }
+
+    return %response;
 }
 
-sub rewrite-with-autoalias(List $signatures, @args --> Array) {
+sub rewrite-with-autoalias(List $signatures, %rewritten-args --> Array) {
     my %aliases; # Key: Signatures, Value: Hash of alias as key and param as value.
     my @signatures = $signatures.Array;
     # Needed for smart matching the signature
-    my @args-pairs = rewrite-with-pairs(@args);
+    my @args-pairs = rewrite-with-pairs(%rewritten-args);
+
 
     # Short circuit if a signature already matches
     for @signatures -> $s {
@@ -110,7 +131,16 @@ sub rewrite-with-autoalias(List $signatures, @args --> Array) {
     return @args;
 }
 
-sub rewrite-with-pairs(@args --> Array) {
+sub rewrite-with-pairs(%rewritten-args --> Array) {
+    my @candidates;
+    push @candidates, %rewritten-args<args>;
+
+    if %rewritten-args<maybe-boolean-idx> :exists {
+        for %rewritten-args<maybe-boolean-idx> -> $m {
+            # Create list of variations of split params
+        }
+    }
+
     my @args-new;
     for @args -> $a {
         if $a.starts-with('-') && $a.contains('=') {
