@@ -8,15 +8,13 @@ sub ARGS-TO-CAPTURE(&main, @args --> Capture) is export {
     # Passthrough
     return &*ARGS-TO-CAPTURE(&main, @args) unless @args;
 
-    my %args-rewritten = convert-space-separator(@args);
-    say %args-rewritten.raku;
+    say "ARGS: " ~ @args.raku;
 
-    # When multi is used for MAINs, &main is a proto and to the matched MAIN.
-    # We need to retrieve all the candidates to find the matching signature.
+    my %args-rewritten = convert-space-separator(@args);
     my @args-new = match-to-signatures(
             %args-rewritten, &main.candidates.map(*.signature).list, @args
     );
-    say @args-new.raku;
+    say "RETURNED: " ~ @args-new.raku;
 
     return &*ARGS-TO-CAPTURE(&main, @args-new);
 }
@@ -72,8 +70,8 @@ sub convert-space-separator(@args --> Hash) {
 # possible args combinations to make sure named boolean parameters are not
 # joined to a positional parameter as a value.
 sub create-args-variations-with-pairs(%rewritten-args --> Array) {
-    # Create @args for all the possible combinations
     my @candidates;
+    push @candidates, rewrite-args-with-pairs(%rewritten-args<args>);
     my @combinations = %rewritten-args<maybe-boolean-idx>.combinations;
     for @combinations -> $c {
         next if $c.elems == 0;
@@ -129,27 +127,65 @@ sub create-aliases-for-signature(Signature $sig --> Hash) {
 # args is returned.
 sub match-to-signatures(%args-rewritten, List $signatures, @args-orig --> Array) {
     my %aliases; # Key: Signature, Value: Hash with alias as key & param as value.
+
     my @args-variations = create-args-variations-with-pairs(%args-rewritten);
-
-    for $signatures.list -> $s {
-        for @args-variations -> $candidate {
-            # Short circuit if a signature already matches
-            return rewrite-args-as-cli($candidate.Array) if $candidate ~~ $s;
-
-            # Rewrite aliases in cli to full param names
-            my @args-full-paramname = $candidate.Array;
+    for @args-variations -> $v {
+        # Short circuit if a signature already matches
+        return rewrite-args-as-cli($v.Array) if $v ~~ any $signatures;
+        say "VARIATION: " ~ $v.raku;
+        my @args-full-paramnames = $v.list;
+        for $signatures.list -> $s {
+            say "SIGNATURE: " ~ $s.raku;
             %aliases = create-aliases-for-signature($s);
-            for $candidate.list.kv -> $i, $p {
-                if $p ~~ Pair && (%aliases{$p.key} :exists) {
-                    @args-full-paramname[$i] = %aliases{$p.key} => $p.value;
+            say "ALIASES: {%aliases.raku}";
+            for $v.kv -> $i, $p {
+                if $p ~~ Pair {
+                    if  (%aliases{$p.key} :exists) {
+                        @args-full-paramnames[$i] = %aliases{$p.key} => $p.value;
+                    }
+                    next;
+                }
+                if $p.starts-with('-') { # boolean named param
+                    my $key = $p.subst(/^\-+/, '');
+                    if (%aliases{$key} :exists) {
+                        @args-full-paramnames[$i] = %aliases{$key}
+                    }
+                    next;
                 }
             }
-
-            return rewrite-args-as-cli(@args-full-paramname)
-                    if @args-full-paramname ~~ $s;
+            say "REWRITTEN: " ~ @args-full-paramnames.raku;
+            return rewrite-args-as-cli(@args-full-paramnames)
+                if @args-full-paramnames ~~ $s;
         }
+
     }
 
+#    for $signatures.list -> $s {
+#        say "SIGNATURE: " ~ $s.raku;
+#        %aliases = create-aliases-for-signature($s);
+#        say "ALIASES: {%aliases.raku}";
+#        for @args-variations -> $candidate {
+#            say "CANDIDATE: " ~ $candidate.raku;
+#            # Short circuit if a signature already matches
+#            return rewrite-args-as-cli($candidate.Array) if $candidate ~~ $s;
+#
+#            # Rewrite aliases in cli to full param names.
+#            # Pairs are used.
+#            my @args-full-paramname = $candidate.list;
+#            for $candidate.kv -> $i, $p {
+#                say $p.raku;
+#                if $p ~~ Pair && (%aliases{$p.key} :exists) {
+#                    @args-full-paramname[$i] = %aliases{$p.key} => $p.value;
+#                }
+#            }
+#            say "REWRITTEN: " ~ @args-full-paramname.raku;
+#
+#            return rewrite-args-as-cli(@args-full-paramname)
+#                    if @args-full-paramname ~~ $s;
+#        }
+#    }
+
+    say "NOTHING matches!";
     return @args-orig; # already in param=value format instead of Pairs
 }
 
