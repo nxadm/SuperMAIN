@@ -70,7 +70,7 @@ sub convert-space-separator(@args --> Hash) {
 
 sub match-to-signatures(%args-rewritten, List $signatures --> Array) {
     my @args;
-    my @args-pairs = create-args-variations-with-pairs(%args-rewritten);
+    my @args-variations = create-args-variations-with-pairs(%args-rewritten);
     return @args;
 }
 
@@ -81,47 +81,19 @@ sub create-args-variations-with-pairs(%rewritten-args --> Array) {
     for @combinations -> $c {
         next if $c.elems == 0;
         my @candidate = %rewritten-args<args>.clone;
-        say @candidate.WHAT;
         my Int $move-right = 0;
         for $c.list -> $idx {
-            my @parts = @candidate[$idx].split('=');
+            my @parts = @candidate[$idx + $move-right].split('=');
             my $named-bool = @parts[0].subst(/^\-+/, '');
             my $positional = @parts[1..*-1].join('');
-            say "CANDIDATE: " ~ @candidate;
-            say "$named-bool, $positional";
-            @candidate.splice($idx + $move-right, 1, $named-bool, $positional);
-            say "REWRITTEN CANDIDATE: " ~ @candidate;
+            @candidate.splice: $idx + $move-right, 1, ($named-bool, $positional);
             $move-right++;
         }
-        push @candidates, @candidate;
-        say "____";
+
+        # Replace key=value by Pairs so we can match signatures later on
+        push @candidates, rewrite-args-with-pairs(@candidate);
     }
 
-    say @candidates.raku;
-#
-#    # Args as is after space separator conversion
-#    push @candidates, %rewritten-args<args>;
-#
-#    if %rewritten-args<maybe-boolean-idx>.defined {
-#        for %rewritten-args<maybe-boolean-idx> -> $idx {
-#            my @candidate = %rewritten-args<args>.clone;
-#            my @parts = @candidate[$idx].split('=');
-#            my $named-bool = @parts[0].subst(/^\-+/, '');
-#            my $positional = @parts[1..*-1].join('');
-#    }
-#}
-#
-#        my @args-new;
-#        for @args -> $a {
-#            if $a.starts-with('-') && $a.contains('=') {
-#                my @parts = $a.split('=');
-#                my $key   = @parts[0].subst(/^\-+/, '');
-#                my $value = @parts[1 .. *-1].join('');
-#                push @args-new: $key => $value;
-#                next;
-#            }
-#    push @args-new: $a;
-#        }
     return @candidates;
 }
 
@@ -190,40 +162,30 @@ sub create-aliases-for-signature(Signature $sig --> Hash) {
 #    return @args;
 #}
 #
-#sub rewrite-with-pairs(%rewritten-args --> Array) {
-#    my @candidates;
-#    push @candidates, %rewritten-args<args>;
-#
-#    if %rewritten-args<maybe-boolean-idx> :exists {
-#        for %rewritten-args<maybe-boolean-idx> -> $idx {
-#            my @candidate = %rewritten-args<args>.clone;
-#            my @parts = @candidate[$idx]
-#            # Create list of variations of split params
-#        }
-#    }
-#
-#    my @args-new;
-#    for @args -> $a {
-#        if $a.starts-with('-') && $a.contains('=') {
-#            my @parts = $a.split('=');
-#            my $key   = @parts[0].subst(/^\-+/, '');
-#            my $value = @parts[1 .. *-1].join('');
-#            push @args-new: $key => $value;
-#            next;
-#        }
-#        push @args-new: $a;
-#    }
-#    return @args-new
-#}
-#
-#sub rewrite-as-cli(@args --> Array) {
-#    my @args-new;
-#    for @args -> $a {
-#        if $a ~~ Pair {
-#            push @args-new: '--' ~ $a.key ~ '=' ~ $a.value;
-#            next;
-#        }
-#        push @args-new: $a;
-#    }
-#    return @args-new
-#}
+
+sub rewrite-args-as-cli(@args --> Array) {
+    my @args-new;
+    for @args -> $a {
+        if $a ~~ Pair {
+            push @args-new: '--' ~ $a.key ~ '=' ~ $a.value;
+            next;
+        }
+        push @args-new: $a;
+    }
+    return @args-new
+}
+
+sub rewrite-args-with-pairs(@args --> Array) {
+    my @args-new;
+    for @args -> $a {
+        if $a.starts-with('-') && $a.contains('=') {
+            my @parts = $a.split('=');
+            my $key   = @parts[0].subst(/^\-+/, '');
+            my $value = @parts[1 .. *-1].join('');
+            push @args-new: $key => $value;
+            next;
+        }
+        push @args-new: $a;
+    }
+    return @args-new;
+}
