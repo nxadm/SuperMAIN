@@ -49,4 +49,14 @@ like $output.chomp, / << NAMED2\: \s+ named2 >>/, "check value";
 like $output.chomp, / << OTHER\: \s+ other >>/, "check value";
 like $output.chomp, / << OTTER\: \s+ otter >>/, "check value";
 
+
+$proc = run 't/supermain-multi.raku', 'pos1', '--bool', 'pos2', '--named1', 'named1',
+        :out, :err;
+is $proc.exitcode, 0, "bool";
+$output = $proc.out.slurp: :close;
+like $output.chomp, / << POSITIONAL1\: \s+ pos1 >>/, "check value";
+like $output.chomp, / << POSITIONAL2\: \s+ pos2 >>/, "check value";
+like $output.chomp, / << NAMED1\: \s+ named1 >>/, "check value";
+like $output.chomp, / << BOOL\: \s+ bool >>/, "check value";
+
 done-testing;

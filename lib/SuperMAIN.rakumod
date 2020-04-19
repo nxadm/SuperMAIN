@@ -5,15 +5,11 @@ PROCESS::<%SUB-MAIN-OPTS><named-anywhere> = True;
 
 # Allow space separated named parameters
 sub ARGS-TO-CAPTURE(&main, @args --> Capture) is export {
-    # Early exit, passthrough function
+    # Passthrough
     return &*ARGS-TO-CAPTURE(&main, @args) unless @args;
 
-#    # %args-rewritten<args> rewrite @args allowing spaces for named params values
-#    # %args-rewritten<maybe-boolean-idx> keeps the indices of parameters that
-#    # may be boolean, and possibly incorrectly joined with a positional parameter
-#    # as a value.
-#    my %args-rewritten = rewrite-separator(@args);
-#
+    my %args-rewritten = convert-space-separator(@args);
+
 #    # When multi is used for MAINs, &main is a proto and to the matched MAIN.
 #    # We need to retrieve all the candidates to find the matching signature.
 #    # Boolean parameters joined with a value are fixed here.
@@ -24,6 +20,98 @@ sub ARGS-TO-CAPTURE(&main, @args --> Capture) is export {
 #    return &*ARGS-TO-CAPTURE(&main, @args-new);
      return &*ARGS-TO-CAPTURE(&main, @args);
 }
+
+# convert-space-separator rewrites @args allowing spaces for named parameter
+# values. The returned hash has 2 keys:
+# - args: an array of the rewritten @args.
+# - maybe-boolean-idx: array of indices of the rewritten @args keeps for
+# incorrect parameter=value combinations that may be the combination of a
+# boolean named and a positional parameter (that must be split).
+sub convert-space-separator(@args --> Hash) {
+    my (%args-rewritten, @args-new, @maybe-boolean-idx);
+    my $prev-named = "";
+
+    for @args -> $a {
+        given True {
+            # Passthrough --param=value named parameter
+            when $a.starts-with('-') && $a.contains('=') {
+                @args-new.push: $a;
+                $prev-named = "";
+            }
+            # Named parameter with no value attached with '='.
+            when $a.starts-with('-') {
+                if $prev-named != "" {
+                    @args-new.push: $prev-named; # boolean named parameter
+                }
+
+                $prev-named = $a;
+            }
+            # Not a named parameter (no starting '-').
+            when $prev-named != "" {
+                # it may be a positional after a named boolean
+                @maybe-boolean-idx.push: @args.new.elems;
+                @args-new.push: "$prev-named=$a";
+                $prev-named = "";
+            }
+            # Positional parameters
+            default {
+                @args-new.push: $a;
+            }
+        }
+    }
+
+
+    %args-rewritten<args> = @args-new;
+    %args-rewritten<maybe-boolean-idx> = @maybe-boolean-idx;
+    return %args-rewritten;
+
+}
+
+
+        #sub rewrite-separator(@args --> Hash) {
+        #    my (%response, @args-new, @maybe-boolean-idx);
+        #    my $prev-arg = "";
+        #    my Bool $prev-named;
+        #   for @args -> $a {
+        #        given True {
+        #            # Passthrough --param=value named parameter
+        #            when $a.starts-with('-') && $a.contains('=') {
+        #                @args-new.push: $a;
+        #                $prev-arg = "";
+        #                $prev-named = True;
+        #            }
+#            # Named parameter with no value attached
+        #            when $a.starts-with('-') {
+        #                # Parameter part of a "--param value" construction
+        #                $prev-arg = $a;
+        #                $prev-named = True;
+        #            }
+#            # Value of named parameter of a positional in a confusing place
+        #            when $prev-arg ne "" {
+        #                if $prev-named {
+        #                    @maybe-boolean-idx.push: @args.new.elems;
+        #                    @args-new.push: "$prev-arg=$a";
+        #                }
+#                $prev-arg = "";
+        #                $prev-named = False;
+        #            }
+#            # Passthrough positional parameters
+        #            default {
+        #                @args-new.push: $a;
+        #                $prev-arg = "";
+        #                $prev-named = False;
+        #            }
+#        }
+#    }
+#
+        #    if @args-new.defined { %response<args> = @args-new; }
+#
+        #    if @maybe-boolean-idx.defined {
+        #        %response<maybe-boolean-idx> = @maybe-boolean-idx;
+        #    }
+#
+        #    return %response;
+        #}
 
 #sub create-aliases(Signature $sig --> Hash) {
 #    my (%aliases, @to-shorten, @reserved);
@@ -53,50 +141,7 @@ sub ARGS-TO-CAPTURE(&main, @args --> Capture) is export {
 #    return %aliases;
 #}
 #
-#sub rewrite-separator(@args --> Hash) {
-#    my (%response, @args-new, @maybe-boolean-idx);
-#    my $prev-arg = "";
-#    my Bool $prev-named;
-#  fixBooleanParams  for @args -> $a {
-#        given True {
-#            # Passthrough --param=value named parameter
-#            when $a.starts-with('-') && $a.contains('=') {
-#                @args-new.push: $a;
-#                $prev-arg = "";
-#                $prev-named = True;
-#            }
-#            # Named parameter with no value attached
-#            when $a.starts-with('-') {
-#                # Parameter part of a "--param value" construction
-#                $prev-arg = $a;
-#                $prev-named = True;
-#            }
-#            # Value of named parameter of a positional in a confusing place
-#            when $prev-arg ne "" {
-#                if $prev-named {
-#                    @maybe-boolean-idx.push: @args.new.elems;
-#                    @args-new.push: "$prev-arg=$a";
-#                }
-#                $prev-arg = "";
-#                $prev-named = False;
-#            }
-#            # Passthrough positional parameters
-#            default {
-#                @args-new.push: $a;
-#                $prev-arg = "";
-#                $prev-named = False;
-#            }
-#        }
-#    }
-#
-#    if @args-new.defined { %response<args> = @args-new; }
-#
-#    if @maybe-boolean-idx.defined {
-#        %response<maybe-boolean-idx> = @maybe-boolean-idx;
-#    }
-#
-#    return %response;
-#}
+
 #
 #sub rewrite-with-autoalias(List $signatures, %rewritten-args --> Array) {
 #    my %aliases; # Key: Signatures, Value: Hash of alias as key and param as value.

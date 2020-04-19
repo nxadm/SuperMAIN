@@ -38,3 +38,10 @@ multi MAIN($positional1, $positional2, Str :n(:$named1), Str :$named2,
     say "OTHER: $otherparam"        if $otherparam.defined;
     say "OTTER: $otterparam"        if $otterparam.defined;
 }
+
+multi MAIN($positional1, $positional2, Str :n(:$named1), Bool :$bool) {
+    say "POSITIONAL1: $positional1" if $positional1.defined;
+    say "POSITIONAL2: $positional2" if $positional2.defined;
+    say "NAMED1: $named1"           if $named1.defined;
+    say "BOOL: $bool";
+}
