@@ -156,34 +156,10 @@ sub match-to-signatures(%args-rewritten, List $signatures, @args-orig --> Array)
             say "REWRITTEN: " ~ @args-full-paramnames.raku;
             return rewrite-args-as-cli(@args-full-paramnames)
                 if @args-full-paramnames ~~ $s;
+            say "NOT MATCHED";
         }
 
     }
-
-#    for $signatures.list -> $s {
-#        say "SIGNATURE: " ~ $s.raku;
-#        %aliases = create-aliases-for-signature($s);
-#        say "ALIASES: {%aliases.raku}";
-#        for @args-variations -> $candidate {
-#            say "CANDIDATE: " ~ $candidate.raku;
-#            # Short circuit if a signature already matches
-#            return rewrite-args-as-cli($candidate.Array) if $candidate ~~ $s;
-#
-#            # Rewrite aliases in cli to full param names.
-#            # Pairs are used.
-#            my @args-full-paramname = $candidate.list;
-#            for $candidate.kv -> $i, $p {
-#                say $p.raku;
-#                if $p ~~ Pair && (%aliases{$p.key} :exists) {
-#                    @args-full-paramname[$i] = %aliases{$p.key} => $p.value;
-#                }
-#            }
-#            say "REWRITTEN: " ~ @args-full-paramname.raku;
-#
-#            return rewrite-args-as-cli(@args-full-paramname)
-#                    if @args-full-paramname ~~ $s;
-#        }
-#    }
 
     say "NOTHING matches!";
     return @args-orig; # already in param=value format instead of Pairs
@@ -206,16 +182,25 @@ sub rewrite-args-as-cli(@args --> Array) {
 # rewrite-args-with-pairs rewrites an args in CLI format of
 # param=value to Pairs.
 sub rewrite-args-with-pairs(@args --> Array) {
+    # TODO fix --bool pos1 -d
+    say "PRE PAIRS: " ~ @args.raku;
     my @args-new;
     for @args -> $a {
-        if $a.starts-with('-') && $a.contains('=') {
-            my @parts = $a.split('=');
-            my $key   = @parts[0].subst(/^\-+/, '');
-            my $value = @parts[1 .. *-1].join('');
+        if $a.starts-with('-') {
+            my ($key, $value);
+            if $a.contains('=') {
+                my @parts = $a.split('=');
+                $key   = @parts[0].subst(/^\-+/, '');
+                $value = @parts[1 .. *-1].join('');
+            } else { # boolean named parameter
+                $key = $a.subst(/^\-+/, '');
+                $value = True;
+            }
             push @args-new: $key => $value;
-            next;
+        } else {
+            push @args-new: $a;
         }
-        push @args-new: $a;
     }
+    say "PAIRS: " ~ @args-new.raku;
     return @args-new;
 }
