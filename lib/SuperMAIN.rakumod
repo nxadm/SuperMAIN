@@ -11,15 +11,14 @@ sub ARGS-TO-CAPTURE(&main, @args --> Capture) is export {
     my %args-rewritten = convert-space-separator(@args);
     say %args-rewritten.raku;
 
-#    # When multi is used for MAINs, &main is a proto and to the matched MAIN.
-#    # We need to retrieve all the candidates to find the matching signature.
-#    # Boolean parameters joined with a value are fixed here.
-#    my @args-new = rewrite-with-autoalias(
-#            &main.candidates.map(*.signature).list, %args-rewritten
-#    );
+    # When multi is used for MAINs, &main is a proto and to the matched MAIN.
+    # We need to retrieve all the candidates to find the matching signature.
+    my @args-new = match-to-signatures(
+            %args-rewritten, &main.candidates.map(*.signature).list
+    );
+    say @args-new.raku;
 
-#    return &*ARGS-TO-CAPTURE(&main, @args-new);
-     return &*ARGS-TO-CAPTURE(&main, @args);
+    return &*ARGS-TO-CAPTURE(&main, @args-new);
 }
 
 # convert-space-separator rewrites @args allowing spaces for named parameter
@@ -69,80 +68,88 @@ sub convert-space-separator(@args --> Hash) {
     return %args-rewritten;
 }
 
+sub match-to-signatures(%args-rewritten, List $signatures --> Array) {
+    my @args;
+    my @args-pairs = create-args-variations-with-pairs(%args-rewritten);
+    return @args;
+}
 
-        #sub rewrite-separator(@args --> Hash) {
-        #    my (%response, @args-new, @maybe-boolean-idx);
-        #    my $prev-arg = "";
-        #    my Bool $prev-named;
-        #   for @args -> $a {
-        #        given True {
-        #            # Passthrough --param=value named parameter
-        #            when $a.starts-with('-') && $a.contains('=') {
-        #                @args-new.push: $a;
-        #                $prev-arg = "";
-        #                $prev-named = True;
-        #            }
-#            # Named parameter with no value attached
-        #            when $a.starts-with('-') {
-        #                # Parameter part of a "--param value" construction
-        #                $prev-arg = $a;
-        #                $prev-named = True;
-        #            }
-#            # Value of named parameter of a positional in a confusing place
-        #            when $prev-arg ne "" {
-        #                if $prev-named {
-        #                    @maybe-boolean-idx.push: @args.new.elems;
-        #                    @args-new.push: "$prev-arg=$a";
-        #                }
-#                $prev-arg = "";
-        #                $prev-named = False;
-        #            }
-#            # Passthrough positional parameters
-        #            default {
-        #                @args-new.push: $a;
-        #                $prev-arg = "";
-        #                $prev-named = False;
-        #            }
-#        }
-#    }
-#
-        #    if @args-new.defined { %response<args> = @args-new; }
-#
-        #    if @maybe-boolean-idx.defined {
-        #        %response<maybe-boolean-idx> = @maybe-boolean-idx;
-        #    }
-#
-        #    return %response;
-        #}
+sub create-args-variations-with-pairs(%rewritten-args --> Array) {
+    # Creats @args for all the possible combinations
+    my @candidates;
 
-#sub create-aliases(Signature $sig --> Hash) {
-#    my (%aliases, @to-shorten, @reserved);
+    my @combinations = %rewritten-args<maybe-boolean-idx>.combinations;
+    say "COMBINATIONS: " ~ @combinations.raku;
+    for @combinations -> $c {
+        my @candidate = %rewritten-args<args>.clone;
+        my Int $move-right = 0;
+        for $c.Array -> $idx {
+            my @parts = @candidate[$idx].split('=');
+            my $named-bool = @parts[0].subst(/^\-+/, '');
+            my $positional = @parts[1..*-1].join('');
+            @candidate.splice: $idx + $move-right, 1, ($named-bool, $positional);
+            $move-right++;
+        }
+        push @candidates, @candidate;
+    }
+
+    say @candidates.raku;
 #
-#    for $sig.params -> $p {
-#        next unless $p.named;
-#        push @reserved: | $p.named_names;
-#        if $p.named_names.elems == 1 {
-#            push @to-shorten: |$p.named_names;
-#        }
+#    # Args as is after space separator conversion
+#    push @candidates, %rewritten-args<args>;
+#
+#    if %rewritten-args<maybe-boolean-idx>.defined {
+#        for %rewritten-args<maybe-boolean-idx> -> $idx {
+#            my @candidate = %rewritten-args<args>.clone;
+#            my @parts = @candidate[$idx].split('=');
+#            my $named-bool = @parts[0].subst(/^\-+/, '');
+#            my $positional = @parts[1..*-1].join('');
 #    }
-#
-#    for @to-shorten.kv -> $idx, $pname {
-#        my @other-params   = @to-shorten.grep(none $pname);
-#        my @other-reserved = @reserved.grep(none $pname);
-#        my @chars = |$pname.comb;
-#        loop (my $i = 0; $i < @chars.elems; $i++) {
-#            my $alias = substr($pname, 0..$i);
-#            my @existing = (@other-params, @other-reserved).flat;
-#            if $alias ne $pname && ! grep { .starts-with($alias) }, @existing  {
-#                %aliases{$alias} = $pname;
-#                last;
-#            }
-#        }
-#    }
-#
-#    return %aliases;
 #}
 #
+#        my @args-new;
+#        for @args -> $a {
+#            if $a.starts-with('-') && $a.contains('=') {
+#                my @parts = $a.split('=');
+#                my $key   = @parts[0].subst(/^\-+/, '');
+#                my $value = @parts[1 .. *-1].join('');
+#                push @args-new: $key => $value;
+#                next;
+#            }
+#    push @args-new: $a;
+#        }
+    return @candidates;
+}
+
+
+sub create-aliases-for-signature(Signature $sig --> Hash) {
+    my (%aliases, @to-shorten, @reserved);
+
+    for $sig.params -> $p {
+        next unless $p.named;
+        push @reserved: | $p.named_names;
+        if $p.named_names.elems == 1 {
+            push @to-shorten: |$p.named_names;
+        }
+    }
+
+    for @to-shorten.kv -> $idx, $pname {
+        my @other-params   = @to-shorten.grep(none $pname);
+        my @other-reserved = @reserved.grep(none $pname);
+        my @chars = |$pname.comb;
+        loop (my $i = 0; $i < @chars.elems; $i++) {
+            my $alias = substr($pname, 0..$i);
+            my @existing = (@other-params, @other-reserved).flat;
+            if $alias ne $pname && ! grep { .starts-with($alias) }, @existing  {
+                %aliases{$alias} = $pname;
+                last;
+            }
+        }
+    }
+
+    return %aliases;
+}
+
 
 #
 #sub rewrite-with-autoalias(List $signatures, %rewritten-args --> Array) {
