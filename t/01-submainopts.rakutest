@@ -24,9 +24,5 @@ is $proc.exitcode, 0, "space separated named param";
 my $output = $proc.out.slurp: :close;
 like $output.chomp, / << NAMED1\: \s+ named1 >>/, "check value";
 like $output.chomp, / << NAMED2\: \s+ named2 >>/, "check value";
-like $output.chomp, / << BOOL\: \s+ True >>/, "check value";
-
-# Check boolean
-
 
 done-testing;
