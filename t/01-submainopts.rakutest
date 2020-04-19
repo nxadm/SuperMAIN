@@ -22,9 +22,10 @@ is $proc.exitcode, 0, "named-anywhere, single '-'";
 $proc = run 't/supermain.raku', 'pos', '--named1', 'named1', '--named2', 'named2', '--bool', :out, :err;
 is $proc.exitcode, 0, "space separated named param";
 my $output = $proc.out.slurp: :close;
-like $output.chomp, / << POSITIONAL\: \s+ pos >>/, "check value";
+like $output.chomp, / << POSITIONAL1\: \s+ pos >>/, "check value";
 like $output.chomp, / << NAMED1\: \s+ named1 >>/, "check value";
 like $output.chomp, / << NAMED2\: \s+ named2 >>/, "check value";
-like $output.chomp, / << BOOL\: \s+ True >>/, "check value";
+like $output.chomp, / << BOOL1\: \s+ True >>/, "check value";
+like $output.chomp, / << BOOL2\: \s+ False >>/, "check value";
 
 done-testing;

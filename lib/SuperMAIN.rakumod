@@ -9,6 +9,7 @@ sub ARGS-TO-CAPTURE(&main, @args --> Capture) is export {
     return &*ARGS-TO-CAPTURE(&main, @args) unless @args;
 
     my %args-rewritten = convert-space-separator(@args);
+    say %args-rewritten.raku;
 
 #    # When multi is used for MAINs, &main is a proto and to the matched MAIN.
 #    # We need to retrieve all the candidates to find the matching signature.
@@ -40,31 +41,32 @@ sub convert-space-separator(@args --> Hash) {
             }
             # Named parameter with no value attached with '='.
             when $a.starts-with('-') {
-                if $prev-named != "" {
+                if $prev-named ne "" {
                     @args-new.push: $prev-named; # boolean named parameter
                 }
 
                 $prev-named = $a;
             }
             # Not a named parameter (no starting '-').
-            when $prev-named != "" {
+            when $prev-named ne "" {
                 # it may be a positional after a named boolean
-                @maybe-boolean-idx.push: @args.new.elems;
+                @maybe-boolean-idx.push: @args-new.elems;
                 @args-new.push: "$prev-named=$a";
                 $prev-named = "";
             }
             # Positional parameters
             default {
                 @args-new.push: $a;
+                $prev-named = "";
             }
         }
     }
+    @args-new.push: $prev-named if $prev-named ne '';
 
 
     %args-rewritten<args> = @args-new;
     %args-rewritten<maybe-boolean-idx> = @maybe-boolean-idx;
     return %args-rewritten;
-
 }
 
 
