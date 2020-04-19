@@ -21,7 +21,8 @@ sub ARGS-TO-CAPTURE(&main, @args --> Capture) is export {
 #            &main.candidates.map(*.signature).list, %args-rewritten
 #    );
 
-    return &*ARGS-TO-CAPTURE(&main, @args-new);
+#    return &*ARGS-TO-CAPTURE(&main, @args-new);
+     return &*ARGS-TO-CAPTURE(&main, @args);
 }
 
 #sub create-aliases(Signature $sig --> Hash) {
