@@ -136,7 +136,9 @@ sub rewrite-with-pairs(%rewritten-args --> Array) {
     push @candidates, %rewritten-args<args>;
 
     if %rewritten-args<maybe-boolean-idx> :exists {
-        for %rewritten-args<maybe-boolean-idx> -> $m {
+        for %rewritten-args<maybe-boolean-idx> -> $idx {
+            my @candidate = %rewritten-args<args>.clone;
+            my @parts = @candidate[$idx]
             # Create list of variations of split params
         }
     }
