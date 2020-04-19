@@ -75,22 +75,26 @@ sub match-to-signatures(%args-rewritten, List $signatures --> Array) {
 }
 
 sub create-args-variations-with-pairs(%rewritten-args --> Array) {
-    # Creats @args for all the possible combinations
+    # Create @args for all the possible combinations
     my @candidates;
-
     my @combinations = %rewritten-args<maybe-boolean-idx>.combinations;
-    say "COMBINATIONS: " ~ @combinations.raku;
     for @combinations -> $c {
+        next if $c.elems == 0;
         my @candidate = %rewritten-args<args>.clone;
+        say @candidate.WHAT;
         my Int $move-right = 0;
-        for $c.Array -> $idx {
+        for $c.list -> $idx {
             my @parts = @candidate[$idx].split('=');
             my $named-bool = @parts[0].subst(/^\-+/, '');
             my $positional = @parts[1..*-1].join('');
-            @candidate.splice: $idx + $move-right, 1, ($named-bool, $positional);
+            say "CANDIDATE: " ~ @candidate;
+            say "$named-bool, $positional";
+            @candidate.splice($idx + $move-right, 1, $named-bool, $positional);
+            say "REWRITTEN CANDIDATE: " ~ @candidate;
             $move-right++;
         }
         push @candidates, @candidate;
+        say "____";
     }
 
     say @candidates.raku;
