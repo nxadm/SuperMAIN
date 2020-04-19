@@ -68,12 +68,9 @@ sub convert-space-separator(@args --> Hash) {
     return %args-rewritten;
 }
 
-sub match-to-signatures(%args-rewritten, List $signatures --> Array) {
-    my @args;
-    my @args-variations = create-args-variations-with-pairs(%args-rewritten);
-    return @args;
-}
-
+# create-args-variations-with-pairs create an Array of Arrays with all the
+# possible args combinations to make sure named boolean parameters are not
+# joined to a positional parameter as a value.
 sub create-args-variations-with-pairs(%rewritten-args --> Array) {
     # Create @args for all the possible combinations
     my @candidates;
@@ -96,6 +93,61 @@ sub create-args-variations-with-pairs(%rewritten-args --> Array) {
 
     return @candidates;
 }
+
+sub match-to-signatures(%args-rewritten, List $signatures --> Array) {
+    my @args;
+    my %aliases; # Key: Signature, Value: Hash with alias as key & param as value.
+    my @args-variations = create-args-variations-with-pairs(%args-rewritten);
+
+    # Short circuit if a signature already matches
+    for $signatures.list -> $s {
+        for @args-variations -> $a {
+            return $a.Array if $a.list ~~ $s;
+        }
+        # TODO: check if better PAIRS of cli
+        %aliases{$s} = create-aliases-for-signature($s);
+    }
+
+
+    return @args;
+}
+
+
+        #
+        #sub rewrite-with-autoalias(List $signatures, %rewritten-args --> Array) {
+        #    my %aliases; # Key: Signatures, Value: Hash of alias as key and param as value.
+        #    my @signatures = $signatures.Array;
+        #    # Needed for smart matching the signature
+        #    my @args-pairs = rewrite-with-pairs(%rewritten-args);
+        #
+        #
+        #    # Short circuit if a signature already matches
+        #    for @signatures -> $s {
+        #        if @args-pairs ~~ $s {
+        #            return @args
+        #        }
+#        %aliases{$s} = create-aliases($s);
+        #    }
+#
+        #    # Rewrite args
+        #    for @signatures -> $s {
+        #        my @args-tmp = @args-pairs.clone;
+        #        my Bool $changed = False;
+        #        for @args-pairs.kv -> $i, $a {
+        #            if $a ~~ Pair && (%aliases{$s}{$a.key} :exists) {
+        #                @args-tmp[$i] = %aliases{$s}{$a.key} => $a.value;
+        #                $changed = True;
+        #            }
+#        }
+#
+        #        if $changed {
+        #            return rewrite-as-cli(@args-tmp);
+        #        }
+#    }
+#
+        #    return @args;
+        #}
+#
 
 
 sub create-aliases-for-signature(Signature $sig --> Hash) {
@@ -127,41 +179,6 @@ sub create-aliases-for-signature(Signature $sig --> Hash) {
 }
 
 
-#
-#sub rewrite-with-autoalias(List $signatures, %rewritten-args --> Array) {
-#    my %aliases; # Key: Signatures, Value: Hash of alias as key and param as value.
-#    my @signatures = $signatures.Array;
-#    # Needed for smart matching the signature
-#    my @args-pairs = rewrite-with-pairs(%rewritten-args);
-#
-#
-#    # Short circuit if a signature already matches
-#    for @signatures -> $s {
-#        if @args-pairs ~~ $s {
-#            return @args
-#        }
-#        %aliases{$s} = create-aliases($s);
-#    }
-#
-#    # Rewrite args
-#    for @signatures -> $s {
-#        my @args-tmp = @args-pairs.clone;
-#        my Bool $changed = False;
-#        for @args-pairs.kv -> $i, $a {
-#            if $a ~~ Pair && (%aliases{$s}{$a.key} :exists) {
-#                @args-tmp[$i] = %aliases{$s}{$a.key} => $a.value;
-#                $changed = True;
-#            }
-#        }
-#
-#        if $changed {
-#            return rewrite-as-cli(@args-tmp);
-#        }
-#    }
-#
-#    return @args;
-#}
-#
 
 sub rewrite-args-as-cli(@args --> Array) {
     my @args-new;
