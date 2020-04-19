@@ -3,7 +3,7 @@ unit module SuperMAIN;
 # Allow named variables at any location
 PROCESS::<%SUB-MAIN-OPTS><named-anywhere> = True;
 
-# Allow space separated named parameters
+# Manipulate @args
 sub ARGS-TO-CAPTURE(&main, @args --> Capture) is export {
     # Passthrough
     return &*ARGS-TO-CAPTURE(&main, @args) unless @args;
@@ -14,7 +14,7 @@ sub ARGS-TO-CAPTURE(&main, @args --> Capture) is export {
     # When multi is used for MAINs, &main is a proto and to the matched MAIN.
     # We need to retrieve all the candidates to find the matching signature.
     my @args-new = match-to-signatures(
-            %args-rewritten, &main.candidates.map(*.signature).list
+            %args-rewritten, &main.candidates.map(*.signature).list, @args
     );
     say @args-new.raku;
 
@@ -94,62 +94,8 @@ sub create-args-variations-with-pairs(%rewritten-args --> Array) {
     return @candidates;
 }
 
-sub match-to-signatures(%args-rewritten, List $signatures --> Array) {
-    my @args;
-    my %aliases; # Key: Signature, Value: Hash with alias as key & param as value.
-    my @args-variations = create-args-variations-with-pairs(%args-rewritten);
-
-    # Short circuit if a signature already matches
-    for $signatures.list -> $s {
-        for @args-variations -> $a {
-            return $a.Array if $a.list ~~ $s;
-        }
-        # TODO: check if better PAIRS of cli
-        %aliases{$s} = create-aliases-for-signature($s);
-    }
-
-
-    return @args;
-}
-
-
-        #
-        #sub rewrite-with-autoalias(List $signatures, %rewritten-args --> Array) {
-        #    my %aliases; # Key: Signatures, Value: Hash of alias as key and param as value.
-        #    my @signatures = $signatures.Array;
-        #    # Needed for smart matching the signature
-        #    my @args-pairs = rewrite-with-pairs(%rewritten-args);
-        #
-        #
-        #    # Short circuit if a signature already matches
-        #    for @signatures -> $s {
-        #        if @args-pairs ~~ $s {
-        #            return @args
-        #        }
-#        %aliases{$s} = create-aliases($s);
-        #    }
-#
-        #    # Rewrite args
-        #    for @signatures -> $s {
-        #        my @args-tmp = @args-pairs.clone;
-        #        my Bool $changed = False;
-        #        for @args-pairs.kv -> $i, $a {
-        #            if $a ~~ Pair && (%aliases{$s}{$a.key} :exists) {
-        #                @args-tmp[$i] = %aliases{$s}{$a.key} => $a.value;
-        #                $changed = True;
-        #            }
-#        }
-#
-        #        if $changed {
-        #            return rewrite-as-cli(@args-tmp);
-        #        }
-#    }
-#
-        #    return @args;
-        #}
-#
-
-
+# create-aliases-for-signature create a Hash with the auto-aliases as keys and
+# full names as values.
 sub create-aliases-for-signature(Signature $sig --> Hash) {
     my (%aliases, @to-shorten, @reserved);
 
@@ -178,8 +124,37 @@ sub create-aliases-for-signature(Signature $sig --> Hash) {
     return %aliases;
 }
 
+# match-to-signatures matches the rewritten @args to signatures and returned a
+# valid @arg is it matches with a signature. If nothing matches, the original
+# args is returned.
+sub match-to-signatures(%args-rewritten, List $signatures, @args-orig --> Array) {
+    my %aliases; # Key: Signature, Value: Hash with alias as key & param as value.
+    my @args-variations = create-args-variations-with-pairs(%args-rewritten);
 
+    for $signatures.list -> $s {
+        for @args-variations -> $candidate {
+            # Short circuit if a signature already matches
+            return rewrite-args-as-cli($candidate.Array) if $candidate ~~ $s;
 
+            # Rewrite aliases in cli to full param names
+            my @args-full-paramname = $candidate.Array;
+            %aliases = create-aliases-for-signature($s);
+            for $candidate.list.kv -> $i, $p {
+                if $p ~~ Pair && (%aliases{$p.key} :exists) {
+                    @args-full-paramname[$i] = %aliases{$p.key} => $p.value;
+                }
+            }
+
+            return rewrite-args-as-cli(@args-full-paramname)
+                    if @args-full-paramname ~~ $s;
+        }
+    }
+
+    return @args-orig; # already in param=value format instead of Pairs
+}
+
+# rewrite-args-as-cli rewrites an args with Pairs to the CLI format of
+# param=value.
 sub rewrite-args-as-cli(@args --> Array) {
     my @args-new;
     for @args -> $a {
@@ -192,6 +167,8 @@ sub rewrite-args-as-cli(@args --> Array) {
     return @args-new
 }
 
+# rewrite-args-with-pairs rewrites an args in CLI format of
+# param=value to Pairs.
 sub rewrite-args-with-pairs(@args --> Array) {
     my @args-new;
     for @args -> $a {
