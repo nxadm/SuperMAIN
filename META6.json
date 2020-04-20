@@ -1,6 +1,6 @@
 {
   "name": "SuperMAIN",
-  "description": "MAIN() with superpowers.",
+  "description": "MAIN() with superpowers",
   "version": "0.1.3",
   "perl": "6.c",
   "authors": [
@@ -16,9 +16,12 @@
   "resources": [],
   "license": "Artistic License 2.0",
   "tags": [
-    "Vortex",
-    "Total",
-    "Perspective"
+    "MAIN",
+    "parameters",
+    "CLI",
+    "Getopt",
+    "Command",
+    "flags"
   ],
   "api": "1",
   "source-url": "git://github.com/nxadm/SuperMAIN.git"
