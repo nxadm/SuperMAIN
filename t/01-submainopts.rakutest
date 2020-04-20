@@ -10,19 +10,38 @@ if $*DISTRO.is-win {
 
 my $proc = run 't/supermain.raku', :out, :err;
 isnt $proc.exitcode, 0, "no args (exitcode)";
-my $errOutput = $proc.err.slurp: :close;
-like $errOutput.chomp, /^^Usage\:/, "no args (output)";
+my $std-err = $proc.err.slurp: :close;
+like $std-err.chomp, /^^Usage\:/, "no args (output)";
 
-$proc = run 't/supermain.raku', 'pos', '--named1=named', '--named2=named2', :out, :err;
+$proc = run 't/supermain.raku', 'pos', '--named=named',
+        '--other-named=other-named', :out, :err;
 is $proc.exitcode, 0, "named-anywhere";
 
-$proc = run 't/supermain.raku', 'pos', '-named1=named1', '--named2=named2', :out, :err;
+$proc = run 't/supermain.raku', 'pos', '-named=named',
+        '--other-named=other-named', :out, :err;
 is $proc.exitcode, 0, "named-anywhere, single '-'";
 
-$proc = run 't/supermain.raku', 'pos', '--named1', 'named1', '--named2', 'named2', '--bool', :out, :err;
+$proc = run 't/supermain.raku', 'pos1', '--named', 'named',
+        '--other-named', 'other-named', '--bool', 'pos2', '-diff-bool',
+        :out, :err;
 is $proc.exitcode, 0, "space separated named param";
-my $output = $proc.out.slurp: :close;
-like $output.chomp, / << NAMED1\: \s+ named1 >>/, "check value";
-like $output.chomp, / << NAMED2\: \s+ named2 >>/, "check value";
+$std-err = $proc.out.slurp: :close;
+like $std-err.chomp, / << POSITIONAL1\: \s+ pos1 >>/, "check value";
+like $std-err.chomp, / << POSITIONAL2\: \s+ pos2 >>/, "check value";
+like $std-err.chomp, / << NAMED\: \s+ named >>/, "check value";
+like $std-err.chomp, / << OTHER\-NAMED\: \s+ other\-named >>/, "check value";
+like $std-err.chomp, / << BOOL\: \s+ True >>/, "check value";
+like $std-err.chomp, / << DIFF\-BOOL\: \s+ True >>/, "check value";
+
+$proc = run 't/supermain.raku', 'pos1', '-n', 'named', '-o', 'other-named',
+        '-b', 'pos2', '-d', :out, :err;
+is $proc.exitcode, 0, "auto alias";
+$std-err = $proc.out.slurp: :close;
+like $std-err.chomp, / << POSITIONAL1\: \s+ pos1 >>/, "check value";
+like $std-err.chomp, / << POSITIONAL2\: \s+ pos2 >>/, "check value";
+like $std-err.chomp, / << NAMED\: \s+ named >>/, "check value";
+like $std-err.chomp, / << OTHER\-NAMED\: \s+ other\-named >>/, "check value";
+like $std-err.chomp, / << BOOL\: \s+ True >>/, "check value";
+like $std-err.chomp, / << DIFF\-BOOL\: \s+ True >>/, "check value";
 
 done-testing;

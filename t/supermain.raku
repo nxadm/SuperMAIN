@@ -2,8 +2,13 @@
 use lib 'lib';
 use SuperMAIN;
 
-sub MAIN($positional, Str :n(:$named1), Str :$named2) {
-    say "POSITIONAL: $positional" if $positional.defined;
-    say "NAMED1: $named1"         if $named1.defined;
-    say "NAMED2: $named2"         if $named2.defined;
+sub MAIN($positional1, $positional2?,
+        :n(:$named), :$other-named,
+        Bool :$bool, Bool :$diff-bool) {
+    say "POSITIONAL1: $positional1" if $positional1.defined;
+    say "POSITIONAL2: $positional2" if $positional2.defined;
+    say "NAMED: $named"             if $named.defined;
+    say "OTHER-NAMED: $other-named" if $other-named.defined;;
+    say "BOOL: "      ~ so $bool;
+    say "DIFF-BOOL: " ~ so $diff-bool;
 }
