@@ -1,8 +1,6 @@
-# SuperMAIN, Raku MAIN() with superpowers [alpha]
+# SuperMAIN, Raku MAIN() with superpowers
 
 [![Build Status](https://travis-ci.org/nxadm/SuperMAIN.svg?branch=master)](https://travis-ci.org/nxadm/SuperMAIN)
-
-THIS IS AN ALPHA RELEASE.
 
 [MAIN](https://docs.raku.org/language/create-cli#sub_MAIN) is one of the many
 nice features that makes Raku a very fun language to work with. Command Line
