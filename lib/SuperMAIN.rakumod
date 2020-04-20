@@ -8,13 +8,10 @@ sub ARGS-TO-CAPTURE(&main, @args --> Capture) is export {
     # Passthrough
     return &*ARGS-TO-CAPTURE(&main, @args) unless @args;
 
-    say "ARGS: " ~ @args.raku;
-
     my %args-rewritten = convert-space-separator(@args);
     my @args-new = match-to-signatures(
             %args-rewritten, &main.candidates.map(*.signature).list, @args
     );
-    say "RETURNED: " ~ @args-new.raku;
 
     return &*ARGS-TO-CAPTURE(&main, @args-new);
 }
@@ -79,7 +76,7 @@ sub create-args-variations-with-pairs(%rewritten-args --> Array) {
         my Int $move-right = 0;
         for $c.list -> $idx {
             my @parts = @candidate[$idx + $move-right].split('=');
-            my $named-bool = @parts[0].subst(/^\-+/, '');
+            my $named-bool = @parts[0];
             my $positional = @parts[1..*-1].join('');
             @candidate.splice: $idx + $move-right, 1, ($named-bool, $positional);
             $move-right++;
@@ -132,12 +129,9 @@ sub match-to-signatures(%args-rewritten, List $signatures, @args-orig --> Array)
     for @args-variations -> $v {
         # Short circuit if a signature already matches
         return rewrite-args-as-cli($v.Array) if $v ~~ any $signatures;
-        say "VARIATION: " ~ $v.raku;
         my @args-full-paramnames = $v.list;
         for $signatures.list -> $s {
-            say "SIGNATURE: " ~ $s.raku;
             %aliases = create-aliases-for-signature($s);
-            say "ALIASES: {%aliases.raku}";
             for $v.kv -> $i, $p {
                 if $p ~~ Pair {
                     if  (%aliases{$p.key} :exists) {
@@ -153,15 +147,11 @@ sub match-to-signatures(%args-rewritten, List $signatures, @args-orig --> Array)
                     next;
                 }
             }
-            say "REWRITTEN: " ~ @args-full-paramnames.raku;
             return rewrite-args-as-cli(@args-full-paramnames)
                 if @args-full-paramnames ~~ $s;
-            say "NOT MATCHED";
         }
-
     }
 
-    say "NOTHING matches!";
     return @args-orig; # already in param=value format instead of Pairs
 }
 
@@ -182,8 +172,6 @@ sub rewrite-args-as-cli(@args --> Array) {
 # rewrite-args-with-pairs rewrites an args in CLI format of
 # param=value to Pairs.
 sub rewrite-args-with-pairs(@args --> Array) {
-    # TODO fix --bool pos1 -d
-    say "PRE PAIRS: " ~ @args.raku;
     my @args-new;
     for @args -> $a {
         if $a.starts-with('-') {
@@ -201,6 +189,5 @@ sub rewrite-args-with-pairs(@args --> Array) {
             push @args-new: $a;
         }
     }
-    say "PAIRS: " ~ @args-new.raku;
     return @args-new;
 }
