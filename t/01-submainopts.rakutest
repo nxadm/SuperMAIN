@@ -10,8 +10,8 @@ if $*DISTRO.is-win {
 
 my $proc = run 't/supermain.raku', :out, :err;
 isnt $proc.exitcode, 0, "no args (exitcode)";
-my $errOutput = $proc.err.slurp: :close;
-like $errOutput.chomp, /^^Usage\:/, "no args (output)";
+my $std-err = $proc.err.slurp: :close;
+like $std-err.chomp, /^^Usage\:/, "no args (output)";
 
 $proc = run 't/supermain.raku', 'pos', '--named=named',
         '--other-named=other-named', :out, :err;
@@ -25,23 +25,23 @@ $proc = run 't/supermain.raku', 'pos1', '--named', 'named',
         '--other-named', 'other-named', '--bool', 'pos2', '-diff-bool',
         :out, :err;
 is $proc.exitcode, 0, "space separated named param";
-my $output = $proc.out.slurp: :close;
-like $output.chomp, / << POSITIONAL1\: \s+ pos1 >>/, "check value";
-like $output.chomp, / << POSITIONAL2\: \s+ pos2 >>/, "check value";
-like $output.chomp, / << NAMED\: \s+ named >>/, "check value";
-like $output.chomp, / << OTHER\-NAMED\: \s+ other\-named >>/, "check value";
-like $output.chomp, / << BOOL\: \s+ True >>/, "check value";
-like $output.chomp, / << DIFF\-BOOL\: \s+ True >>/, "check value";
+$std-err = $proc.out.slurp: :close;
+like $std-err.chomp, / << POSITIONAL1\: \s+ pos1 >>/, "check value";
+like $std-err.chomp, / << POSITIONAL2\: \s+ pos2 >>/, "check value";
+like $std-err.chomp, / << NAMED\: \s+ named >>/, "check value";
+like $std-err.chomp, / << OTHER\-NAMED\: \s+ other\-named >>/, "check value";
+like $std-err.chomp, / << BOOL\: \s+ True >>/, "check value";
+like $std-err.chomp, / << DIFF\-BOOL\: \s+ True >>/, "check value";
 
 $proc = run 't/supermain.raku', 'pos1', '-n', 'named', '-o', 'other-named',
         '-b', 'pos2', '-d', :out, :err;
 is $proc.exitcode, 0, "auto alias";
-$output = $proc.out.slurp: :close;
-like $output.chomp, / << POSITIONAL1\: \s+ pos1 >>/, "check value";
-like $output.chomp, / << POSITIONAL2\: \s+ pos2 >>/, "check value";
-like $output.chomp, / << NAMED\: \s+ named >>/, "check value";
-like $output.chomp, / << OTHER\-NAMED\: \s+ other\-named >>/, "check value";
-like $output.chomp, / << BOOL\: \s+ True >>/, "check value";
-like $output.chomp, / << DIFF\-BOOL\: \s+ True >>/, "check value";
+$std-err = $proc.out.slurp: :close;
+like $std-err.chomp, / << POSITIONAL1\: \s+ pos1 >>/, "check value";
+like $std-err.chomp, / << POSITIONAL2\: \s+ pos2 >>/, "check value";
+like $std-err.chomp, / << NAMED\: \s+ named >>/, "check value";
+like $std-err.chomp, / << OTHER\-NAMED\: \s+ other\-named >>/, "check value";
+like $std-err.chomp, / << BOOL\: \s+ True >>/, "check value";
+like $std-err.chomp, / << DIFF\-BOOL\: \s+ True >>/, "check value";
 
 done-testing;
