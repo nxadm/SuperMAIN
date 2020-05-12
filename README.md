@@ -32,7 +32,7 @@ $ prog.raku [--named1 <Str>]
 ```
 
 - Auto-alias named parameters without the need to declare an alias, e.g. to
-make "--n" an alias of "--named", you need to declare the alias in the
+make `-n` an alias of `--named`, you need to declare the alias in the
 signature:
 
 ```raku
