@@ -104,7 +104,7 @@ sub create-aliases-for-signature(Signature $sig --> Hash) {
         }
     }
 
-    for @to-shorten.kv -> $idx, $pname {
+    for @to-shorten.values -> $pname {
         my @other-params   = @to-shorten.grep(none $pname);
         my @other-reserved = @reserved.grep(none $pname);
         my @chars = |$pname.comb;
