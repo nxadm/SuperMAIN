@@ -77,9 +77,9 @@ sub create-args-variations-with-pairs(%rewritten-args --> Array) {
         my @candidate = %rewritten-args<args>.clone;
         my Int $move-right = 0;
         for $c.list -> $idx {
-            my @parts = @candidate[$idx + $move-right].split('=');
+            my @parts = @candidate[$idx + $move-right].split('=',2);
             my $named-bool = @parts[0];
-            my $positional = @parts[1..*-1].join('');
+            my $positional = @parts[1];
             @candidate.splice: $idx + $move-right, 1, ($named-bool, $positional);
             $move-right++;
         }
@@ -179,9 +179,9 @@ sub rewrite-args-with-pairs(@args --> Array) {
         if $a.starts-with('-') {
             my ($key, $value);
             if $a.contains('=') {
-                my @parts = $a.split('=');
+                my @parts = $a.split('=',2);
                 $key   = @parts[0].subst(/^\-+/, '');
-                $value = @parts[1 .. *-1].join('');
+                $value = @parts[1];
             } else { # boolean named parameter
                 $key = $a.subst(/^\-+/, '');
                 $value = True;
