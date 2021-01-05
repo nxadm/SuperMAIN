@@ -1,6 +1,6 @@
 unit module SuperMAIN;
 
-our $VERSION = '0.1.3';
+our $VERSION = '0.1.4';
 
 # Allow named variables at any location
 PROCESS::<%SUB-MAIN-OPTS><named-anywhere> = True;

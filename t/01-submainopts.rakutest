@@ -26,10 +26,10 @@ $proc = run 't/supermain.raku', 'pos1', '--named', 'named',
         :out, :err;
 is $proc.exitcode, 0, "space separated named param";
 $std-err = $proc.out.slurp: :close;
-like $std-err.chomp, / << POSITIONAL1\: \s+ pos1 >>/, "check value";
-like $std-err.chomp, / << POSITIONAL2\: \s+ pos2 >>/, "check value";
-like $std-err.chomp, / << NAMED\: \s+ named >>/, "check value";
-like $std-err.chomp, / << OTHER\-NAMED\: \s+ other\-named >>/, "check value";
+like $std-err.chomp, / << POSITIONAL1\: \s+ \[pos1\] .+ >>/, "check value";
+like $std-err.chomp, / << POSITIONAL2\: \s+ \[pos2\] .+ >>/, "check value";
+like $std-err.chomp, / << NAMED\: \s+ \[named\] .+ >>/, "check value";
+like $std-err.chomp, / << OTHER\-NAMED\: \s+ \[other\-named\] .+ >>/, "check value";
 like $std-err.chomp, / << BOOL\: \s+ True >>/, "check value";
 like $std-err.chomp, / << DIFF\-BOOL\: \s+ True >>/, "check value";
 
@@ -37,10 +37,10 @@ $proc = run 't/supermain.raku', 'pos1', '-n', 'named', '-o', 'other-named',
         '-b', 'pos2', '-d', :out, :err;
 is $proc.exitcode, 0, "auto alias";
 $std-err = $proc.out.slurp: :close;
-like $std-err.chomp, / << POSITIONAL1\: \s+ pos1 >>/, "check value";
-like $std-err.chomp, / << POSITIONAL2\: \s+ pos2 >>/, "check value";
-like $std-err.chomp, / << NAMED\: \s+ named >>/, "check value";
-like $std-err.chomp, / << OTHER\-NAMED\: \s+ other\-named >>/, "check value";
+like $std-err.chomp, / << POSITIONAL1\: \s+ \[pos1\] .+ >>/, "check value";
+like $std-err.chomp, / << POSITIONAL2\: \s+ \[pos2\] .+ >>/, "check value";
+like $std-err.chomp, / << NAMED\: \s+ \[named\] .+ >>/, "check value";
+like $std-err.chomp, / << OTHER\-NAMED\: \s+ \[other\-named\] .+ >>/, "check value";
 like $std-err.chomp, / << BOOL\: \s+ True >>/, "check value";
 like $std-err.chomp, / << DIFF\-BOOL\: \s+ True >>/, "check value";
 

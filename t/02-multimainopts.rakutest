@@ -26,34 +26,34 @@ $proc = run 't/supermain-multi.raku', 'pos1', 'pos2', '--named', 'named',
         :out, :err;
 is $proc.exitcode, 0, "space separated named param";
 my $std-out = $proc.out.slurp: :close;
-like $std-out.chomp, / << NAMED\: \s+ named >>/, "check value";
-like $std-out.chomp, / << OTHER\-NAMED\: \s+ other\-named >>/, "check value";
-like $std-out.chomp, / << DIFF\-NAMED\: \s+ diff\-named >>/, "check value";
+like $std-out.chomp, / << NAMED\: \s+ \[named\] .+ >>/, "check value";
+like $std-out.chomp, / << OTHER\-NAMED\: \s+ \[other\-named\] .+ >>/, "check value";
+like $std-out.chomp, / << DIFF\-NAMED\: \s+ \[diff\-named\] /, "check value";
 
 
 $proc = run 't/supermain-multi.raku', 'pos1', 'pos2', '--named', 'named',
         '-o', 'other-named', :out, :err;
 is $proc.exitcode, 0, "autoalias shortest";
 $std-out = $proc.out.slurp: :close;
-like $std-out.chomp, / << NAMED\: \s+ named >>/, "check value";
-like $std-out.chomp, / << OTHER\-NAMED\: \s+ other\-named >>/, "check value";
+like $std-out.chomp, / << NAMED\: \s+ \[named\] .+ >>/, "check value";
+like $std-out.chomp, / << OTHER\-NAMED\: \s+ \[other\-named\] /, "check value";
 
 $proc = run 't/supermain-multi.raku', 'pos1', 'pos2',
         '--named', 'named', '-oth', 'other-named', '-ott', 'otter-named',
         :out, :err;
 is $proc.exitcode, 0, "autoalias multi match";
 $std-out = $proc.out.slurp: :close;
-like $std-out.chomp, / << NAMED\: \s+ named >>/, "check value";
-like $std-out.chomp, / << OTHER\-NAMED\: \s+ other\-named >>/, "check value";
-like $std-out.chomp, / << OTTER\-NAMED\: \s+ otter\-named >>/, "check value";
+like $std-out.chomp, / << NAMED\: \s+ \[named\] .+ >>/, "check value";
+like $std-out.chomp, / << OTHER\-NAMED\: \s+ \[other\-named\] .+ >>/, "check value";
+like $std-out.chomp, / << OTTER\-NAMED\: \s+ \[otter\-named\] /, "check value";
 
 $proc = run 't/supermain-multi.raku', 'pos1', '--bool', '-d', 'pos2',
         '-n', 'named', :out, :err;
 is $proc.exitcode, 0, "boolean order + autoalias";
 $std-out = $proc.out.slurp: :close;
-like $std-out.chomp, / << POSITIONAL1\: \s+ pos1 >>/, "check value";
-like $std-out.chomp, / << POSITIONAL2\: \s+ pos2 >>/, "check value";
-like $std-out.chomp, / << NAMED\: \s+ named >>/, "check value";
+like $std-out.chomp, / << POSITIONAL1\: \s+ \[pos1\] .+ >>/, "check value";
+like $std-out.chomp, / << POSITIONAL2\: \s+ \[pos2\] .+ >>/, "check value";
+like $std-out.chomp, / << NAMED\: \s+ \[named\] .+ >>/, "check value";
 like $std-out.chomp, / << BOOL\: \s+ True >>/, "check value";
 like $std-out.chomp, / << DIFF\-BOOL\: \s+ True >>/, "check value";
 

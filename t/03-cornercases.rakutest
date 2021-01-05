@@ -1,0 +1,32 @@
+use Test;
+use lib 'lib';
+
+# Skip test on Windows for now
+if $*DISTRO.is-win {
+    note "Windows testing skipped for now";
+    done-testing;
+    exit;
+}
+
+my $proc = run 't/supermain.raku', 'pos1',
+        '--named=named=withequalsign',
+        :out, :err;
+is $proc.exitcode, 0, "= as part of named parameter value";
+my $std-out = $proc.out.slurp: :close;
+like $std-out.chomp, / << NAMED\: \s+ \[named\=withequalsign\] /, "check value";
+
+$proc = run 't/supermain.raku', 'pos1',
+        '--named=named=withequalsign=1=2=3=',
+        :out, :err;
+is $proc.exitcode, 0, "multiple = as part of named parameter value";
+$std-out = $proc.out.slurp: :close;
+like $std-out.chomp, / << NAMED\: \s+ \[named\=withequalsign\=1\=2\=3\=\] /, "check value";
+
+$proc = run 't/supermain.raku', 'pos1',
+        '--named', ' named-with-spaces ', :out, :err;
+is $proc.exitcode, 0, "named parameter value with spaces";
+$std-out = $proc.out.slurp: :close;
+like $std-out.chomp, / << NAMED\: \s+ \[ \s named\-with\-spaces \s \] .+ /, "check value";
+
+
+done-testing;
