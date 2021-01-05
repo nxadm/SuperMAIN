@@ -6,7 +6,7 @@
 nice features that makes Raku a very fun language to work with. Command Line
 Interfaces (CLI) can be easily be created in a very intuitive way.
 
-This modules adds features to MAIN without changing the syntax (or semantics).
+This module adds features to MAIN without changing the syntax (or semantics).
 Everything works as before, just with some nice-to-haves for the users of the
 CLI.
 
