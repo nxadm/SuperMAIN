@@ -15,6 +15,8 @@ sub ARGS-TO-CAPTURE(&main, @args --> Capture) is export {
             %args-rewritten, &main.candidates.map(*.signature).list, @args
     );
 
+    say "Returned to MAIN: {@args-new.raku}";
+
     return &*ARGS-TO-CAPTURE(&main, @args-new);
 }
 
@@ -59,9 +61,9 @@ sub convert-space-separator(@args --> Hash) {
     }
     @args-new.push: $prev-named if $prev-named ne '';
 
-
     %args-rewritten<args> = @args-new;
     %args-rewritten<maybe-boolean-idx> = @maybe-boolean-idx;
+
     return %args-rewritten;
 }
 
@@ -126,15 +128,17 @@ sub create-aliases-for-signature(Signature $sig --> Hash) {
 # args is returned.
 sub match-to-signatures(%args-rewritten, List $signatures, @args-orig --> Array) {
     my %aliases; # Key: Signature, Value: Hash with alias as key & param as value.
-
     my @args-variations = create-args-variations-with-pairs(%args-rewritten);
     for @args-variations -> $v {
         # Short circuit if a signature already matches
-        return rewrite-args-as-cli($v.Array) if $v ~~ any $signatures;
+        # return rewrite-args-as-cli($v.Array) if $v ~~ any $signatures;
+        return $v.Array if $v ~~ any $signatures;
+
         my @args-full-paramnames = $v.list;
         for $signatures.list -> $s {
             %aliases = create-aliases-for-signature($s);
             for $v.kv -> $i, $p {
+                say "PARAM: {$p.raku}";
                 if $p ~~ Pair {
                     if  (%aliases{$p.key} :exists) {
                         @args-full-paramnames[$i] = %aliases{$p.key} => $p.value;
@@ -143,14 +147,22 @@ sub match-to-signatures(%args-rewritten, List $signatures, @args-orig --> Array)
                 }
                 if $p.starts-with('-') { # boolean named param
                     my $key = $p.subst(/^\-+/, '');
+                    say "KEY: $key";
                     if (%aliases{$key} :exists) {
                         @args-full-paramnames[$i] = %aliases{$key}
                     }
                     next;
                 }
             }
-            return rewrite-args-as-cli(@args-full-paramnames)
-                if @args-full-paramnames ~~ $s;
+
+#            return rewrite-args-as-cli(@args-full-paramnames)
+#                if @args-full-paramnames ~~ $s;
+            say "ARGS FULL: " ~ @args-full-paramnames.raku;
+            if @args-full-paramnames ~~ $s {
+                say "MATCHED";
+                return @args-full-paramnames;
+            }
+            return @args-full-paramnames if @args-full-paramnames ~~ $s;
         }
     }
 

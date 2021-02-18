@@ -22,11 +22,18 @@ is $proc.exitcode, 0, "multiple = as part of named parameter value";
 $std-out = $proc.out.slurp: :close;
 like $std-out.chomp, / << NAMED\: \s+ \[named\=withequalsign\=1\=2\=3\=\] /, "check value";
 
-$proc = run 't/supermain.raku', 'pos1',
-        '--named', ' named-with-spaces ', :out, :err;
+$proc = run 't/supermain.raku', 'pos1', '--named', ' named-with-spaces ', :out, :err;
 is $proc.exitcode, 0, "named parameter value with spaces";
 $std-out = $proc.out.slurp: :close;
 like $std-out.chomp, / << NAMED\: \s+ \[ \s named\-with\-spaces \s \] .+ /, "check value";
+
+$proc = run 't/supermain-enum.raku', 'pos1', '--choice', "1", :out, :err;
+my $std-err = $proc.err.slurp: :close;
+$std-err.say;
+is $proc.exitcode, 0, "named parameter value with enum";
+$std-out = $proc.out.slurp: :close;
+like $std-out.chomp, / << CHOICE\: \s+ \[ 3 \] /, "check value";
+
 
 
 done-testing;
