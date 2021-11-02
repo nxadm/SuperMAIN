@@ -14,7 +14,7 @@
     "SuperMAIN": "lib/SuperMAIN.rakumod"
   },
   "resources": [],
-  "license": "Artistic License 2.0",
+  "license": "Artistic-2.0",
   "tags": [
     "MAIN",
     "parameters",
